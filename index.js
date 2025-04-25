@@ -1,67 +1,34 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const wppconnect = require('@wppconnect-team/wppconnect');
-
 const app = express();
 const port = process.env.PORT || 8080;
 
-app.use(bodyParser.json());
+let qrCodeBase64 = '';
 
-let qrCodeData = '';
+app.use(express.json({ limit: '10mb' }));
 
-// Initialize WPPConnect session and capture QR codes
-wppconnect.create({
-  session: 'lumieregyn',
-  catchQR: (qrCode) => {
-    qrCodeData = qrCode;
-    console.log('QR code received:', qrCode);
-  },
-  puppeteerOptions: {
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  },
-}).then((client) => {
-  console.log('✅ WhatsApp conectado e pronto para envio.');
-
-  // Additional event handlers as needed...
-}).catch((err) => {
-  console.error('❌ Erro na inicialização do WhatsApp:', err);
-});
-
-// Route to display QR code as an image
 app.get('/qr', (req, res) => {
-  if (!qrCodeData) {
-    return res.status(404).send('QR code ainda não gerado.');
+  if (!qrCodeBase64) {
+    return res.send('QR code ainda não gerado.');
   }
-  const html = \`
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head><meta charset="UTF-8"><title>QR Code WhatsApp</title></head>
-    <body>
-      <h3>Escaneie o QR Code:</h3>
-      <img src="data:image/png;base64,\${qrCodeData}" />
-    </body>
-    </html>
-  \`;
+  const html = '<html><body style="display:flex;justify-content:center;align-items:center;height:100vh">' +
+               '<img src="data:image/png;base64,' + qrCodeBase64 + '" />' +
+               '</body></html>';
   res.send(html);
 });
 
-// Endpoint to update QR code via POST
-// Accepts JSON: { "qr": "<base64-string>" }
 app.post('/qr', (req, res) => {
-  const { qr } = req.body;
-  if (!qr) {
-    return res.status(400).json({ status: 'error', message: 'Campo qr é obrigatório.' });
+  const { code } = req.body;
+  if (!code) {
+    return res.status(400).json({ error: 'Código base64 não fornecido' });
   }
-  qrCodeData = qr;
-  res.json({ status: 'ok' });
+  qrCodeBase64 = code.replace(/^data:image\/png;base64,/, '');
+  res.json({ status: 'QR code armazenado com sucesso' });
 });
 
-// Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.send('ok');
 });
 
 app.listen(port, () => {
-  console.log(\`🚀 Servidor rodando na porta \${port}\`);
+  console.log('🚀 Servidor rodando na porta ' + port);
 });
