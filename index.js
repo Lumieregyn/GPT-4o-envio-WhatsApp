@@ -1,77 +1,72 @@
-import express from 'express';
-import { create } from '@wppconnect-team/wppconnect';
-import { config } from 'dotenv';
-import axios from 'axios';
-import { OpenAI } from 'openai';
-
-config();
+require('dotenv').config();
+const express = require('express');
+const axios = require('axios');
+const fs = require('fs');
+const { create } = require('@wppconnect-team/wppconnect');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
 const GESTOR_PHONE = process.env.GESTOR_PHONE;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-function montarConteudoConversacional(message) {
-  const nomeCliente = message.user?.Name || 'Cliente';
-  const texto = message.message?.text || '';
-  const vendedor = message.attendant?.Name || 'Vendedor';
-  return `Conversa entre ${vendedor} e ${nomeCliente}:
+const prompt = `Você é um agente que analisa conversas de WhatsApp e extrai as confirmações do cliente para um pedido. Verifique se foram confirmados: produto, cor, quantidade, tensão, medidas, prazo e se o cliente disse "pode gerar".`;
 
-${texto}`;
+function montarMensagemAlerta(nomeCliente, vendedor, pendencias) {
+  return `⚠️ *Alerta de Checklist Incompleto*
+Cliente: ${nomeCliente}
+Vendedor: ${vendedor}
+
+Itens pendentes:
+${pendencias
+    .map((p) => `- ${p}`)
+    .join('
+')}
+
+Por favor, confirme com o cliente antes de prosseguir.`;
 }
 
-function criarPromptFinal(conteudo) {
-  return `A seguir está a transcrição de uma conversa no WhatsApp entre um vendedor e um cliente. Extraia as informações confirmadas pelo cliente (produto, cor, medidas, quantidade, tensão, prazo) e informe se o cliente autorizou ou não gerar o pedido. Sinalize os campos ausentes e oriente o vendedor sobre o que falta.
+function analisarConteudoTexto(texto) {
+  const pendencias = [];
 
-Conversa:
-${conteudo}`;
+  if (!/produto|arandela|pendente|plafon|spot/i.test(texto)) pendencias.push('Produto');
+  if (!/preto|branco|dourado|cobre|cromado/i.test(texto)) pendencias.push('Cor');
+  if (!/\d+\s?(peças|pçs|unidades?)/i.test(texto)) pendencias.push('Quantidade');
+  if (!/127|220/i.test(texto)) pendencias.push('Tensão');
+  if (!/cm|medida|altura|largura/i.test(texto)) pendencias.push('Medidas');
+  if (!/prazo|dias|úteis|entrega/i.test(texto)) pendencias.push('Prazo');
+  if (!/pode gerar|pode fazer|pode mandar|pode fechar/i.test(texto)) pendencias.push('Confirmação final');
+
+  return pendencias;
 }
 
-async function enviarMensagem(numero, texto) {
-  try {
-    const session = await global.client.getSessionToken();
-    const result = await global.client.sendText(numero, texto, { waitForAck: true, timeout: 15000 });
-    console.log(`✅ Mensagem enviada para ${numero}`);
-    return result;
-  } catch (error) {
-    console.error('❌ Erro no envio de alerta:', error.message);
-    return null;
-  }
+async function enviarWhatsApp(numero, mensagem) {
+  if (!global.client) return;
+  await global.client.sendText(numero + '@c.us', mensagem);
 }
 
 app.post('/conversa', async (req, res) => {
   try {
-    const message = req.body.payload || req.body;
-    const conteudo = montarConteudoConversacional(message);
-    const promptFinal = criarPromptFinal(conteudo);
+    const { user, message, attendant } = req.body.payload || req.body;
 
-    const resposta = await openai.chat.completions.create({
-      messages: [{ role: 'user', content: promptFinal }],
-      model: 'gpt-4o'
-    });
+    const nomeCliente = user?.Name || 'Cliente';
+    const vendedor = attendant?.Name || 'Vendedor';
+    const texto = message?.text || '';
 
-    const analise = resposta.choices[0].message.content.trim();
-    const cliente = message.user?.Name || 'Cliente';
-    const vendedor = message.attendant?.Name || 'Vendedor';
-    const foneVendedor = message.user?.Phone;
+    console.log('📨 Mensagem recebida:', texto);
 
-    console.log(`\n📌 Análise GPT-4o:`, analise);
+    const pendencias = analisarConteudoTexto(texto);
 
-    const alerta = `⚠️ Atendimento de ${vendedor} com ${cliente}
+    if (pendencias.length > 0) {
+      const alerta = montarMensagemAlerta(nomeCliente, vendedor, pendencias);
+      console.log('➡️ Enviando alerta para GESTOR:', GESTOR_PHONE);
+      await enviarWhatsApp(GESTOR_PHONE, alerta);
+    }
 
-${analise}
-
-📱 Cliente: ${foneVendedor}`;
-    await enviarMensagem(GESTOR_PHONE, alerta);
-
-    return res.json({ status: 'ok', analise });
-  } catch (error) {
-    console.error('Erro na análise GPT ou envio WhatsApp:', error.message);
-    return res.status(500).json({ error: 'Erro interno' });
+    res.json({ status: 'ok', pendencias });
+  } catch (err) {
+    console.error('❌ Erro geral:', err);
+    res.status(500).json({ error: 'Erro interno' });
   }
 });
 
@@ -79,15 +74,16 @@ create({
   session: 'lumieregyn',
   headless: true,
   browserArgs: ['--no-sandbox'],
-  catchQR: (base64Qr, asciiQR, attempts, urlCode) => {
-    console.log('⚠️ Escaneie o QR Code no seu WhatsApp:');
-    console.log(asciiQR);
-  },
-  statusFind: (statusSession) => {
-    console.log('Sessão:', statusSession);
-  }
-}).then((client) => {
-  global.client = client;
-  const PORT = process.env.PORT || 8080;
-  app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
+  waitForLogin: true,
+  autoClose: 0,
+})
+  .then((client) => {
+    global.client = client;
+    console.log('✅ WhatsApp conectado e pronto para envio.');
+  })
+  .catch((erro) => console.error('Erro ao iniciar WPP:', erro));
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
