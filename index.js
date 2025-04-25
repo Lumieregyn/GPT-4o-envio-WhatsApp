@@ -1,31 +1,52 @@
+
 require('dotenv').config();
 const express = require('express');
 const { create } = require('@wppconnect-team/wppconnect');
 const axios = require('axios');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
+app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const GESTOR_PHONE = process.env.GESTOR_PHONE;
 
 let client = null;
+let qrImageBase64 = null;
 
 create({
   session: 'lumieregyn',
   catchQR: (base64Qrimg, asciiQR, attempt, urlCode) => {
-    console.log('🔗 Escaneie o QR Code no seu WhatsApp:');
-    console.log(asciiQR);
+    qrImageBase64 = base64Qrimg.split(',')[1];
+    fs.writeFileSync('./public/qr.html', `
+      <html>
+        <body style="text-align:center;margin-top:40px;">
+          <h2>Escaneie o QR Code abaixo:</h2>
+          <img src="data:image/png;base64,${qrImageBase64}" />
+        </body>
+      </html>
+    `);
+    console.log('📸 QR Code atualizado. Acesse /qr para escanear.');
   },
   logQR: false,
   headless: true,
   useChrome: true,
-  browserArgs: ['--no-sandbox'],
+  browserArgs: ['--no-sandbox']
 }).then((wpp) => {
   client = wpp;
   console.log('✅ WhatsApp conectado!');
+});
+
+app.get('/qr', (_, res) => {
+  const htmlPath = path.join(__dirname, 'public', 'qr.html');
+  if (fs.existsSync(htmlPath)) {
+    res.sendFile(htmlPath);
+  } else {
+    res.send('QR Code ainda não gerado. Aguarde...');
+  }
 });
 
 app.post('/conversa', async (req, res) => {
@@ -45,8 +66,7 @@ app.post('/conversa', async (req, res) => {
 
   const conteudo = message.text || '[anexo]';
 
-  const prompt = `Você é um supervisor de atendimento comercial. Verifique se nesta conversa o cliente confirmou: produto, cor, medidas, quantidade, tensão, prazo e disse "pode gerar". Mensagem:
-${conteudo}`;
+  const prompt = \`Você é um supervisor de atendimento comercial. Verifique se nesta conversa o cliente confirmou: produto, cor, medidas, quantidade, tensão, prazo e disse "pode gerar". Mensagem:\n\${conteudo}\`;
 
   try {
     const gpt = await axios.post('https://api.openai.com/v1/chat/completions', {
@@ -55,7 +75,7 @@ ${conteudo}`;
       temperature: 0.2
     }, {
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: \`Bearer \${OPENAI_API_KEY}\`,
         'Content-Type': 'application/json'
       }
     });
@@ -64,15 +84,10 @@ ${conteudo}`;
     console.log('📌 Análise:', resultado);
 
     if (resultado.includes('⚠️')) {
-      const alerta = `🚨 *ATENÇÃO*
-O cliente *${user.Name || 'Cliente'}* ainda não confirmou tudo:
+      const alerta = \`🚨 *ATENÇÃO*\nO cliente *\${user.Name || 'Cliente'}* ainda não confirmou tudo:\n\n\${resultado}\n\nResponsável: *\${attendant.Name || 'vendedor'}*\`;
 
-${resultado}
-
-Responsável: *${attendant.Name || 'vendedor'}*`;
-
-      if (GESTOR_PHONE) await client.sendText(`${GESTOR_PHONE}@c.us`, alerta);
-      if (user.Phone) await client.sendText(`${user.Phone}@c.us`, alerta);
+      if (GESTOR_PHONE) await client.sendText(\`\${GESTOR_PHONE}@c.us\`, alerta);
+      if (user.Phone) await client.sendText(\`\${user.Phone}@c.us\`, alerta);
       console.log('✅ Alerta enviado!');
     }
 
@@ -84,5 +99,5 @@ Responsável: *${attendant.Name || 'vendedor'}*`;
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log(\`🚀 Servidor rodando na porta \${PORT}\`);
 });
