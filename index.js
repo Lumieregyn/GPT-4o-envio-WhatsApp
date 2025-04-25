@@ -73,16 +73,16 @@ create({
     `);
     console.log('📸 QR Code atualizado. Acesse /qr para escanear.');
   },
-  logQR: false,
   headless: true,
   useChrome: true,
+  logQR: false,
+  protocolTimeout: 60000, // ← aumenta o timeout para 60 segundos
   browserArgs: ['--no-sandbox']
 }).then((wpp) => {
   client = wpp;
   console.log('✅ WhatsApp conectado e pronto para envio.');
-}).catch((err) => {
-  console.error('❌ Erro ao iniciar sessão do WhatsApp:', err.message);
 });
+
 
 app.post('/conversa', async (req, res) => {
   console.log('📥 Requisição recebida em /conversa');
