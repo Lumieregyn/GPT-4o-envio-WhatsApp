@@ -1,36 +1,42 @@
-
 import express from 'express';
 import { create } from '@wppconnect-team/wppconnect';
+import fs from 'fs';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-let qrCodeImage = null;
+let qrcodeBase64 = null;
 
 create({
   session: 'lumieregyn',
-  catchQR: (base64Qr, asciiQR) => {
-    qrCodeImage = base64Qr; // Armazena a imagem base64 do QR
-    console.log('🔁 Novo QR gerado');
+  catchQR: (base64Qr, asciiQR, attempts, urlCode) => {
+    qrcodeBase64 = base64Qr;
+    console.log('🔑 QR Code atualizado');
   },
   headless: true,
-  useChrome: false,
-  browserArgs: ['--no-sandbox'],
-}).then((client) => {
-  console.log('✅ WhatsApp conectado e pronto para envio');
+  browserArgs: ['--no-sandbox']
+})
+.then((client) => {
+  console.log('✅ WhatsApp conectado e pronto para envio.');
+})
+.catch((error) => {
+  console.error('❌ Erro ao iniciar o WPPConnect:', error);
 });
 
 app.get('/qr', (req, res) => {
-  if (!qrCodeImage) {
-    return res.status(503).send('QR code ainda não gerado.');
+  if (!qrcodeBase64) {
+    return res.send('<h3>QR Code ainda não gerado. Aguarde...</h3>');
   }
-  const html = \`
+
+  const html = `
     <html>
-      <body style="text-align:center;">
-        <h2>Escaneie o QR Code para conectar ao WhatsApp</h2>
-        <img src="data:image/png;base64,\${qrCodeImage}" width="300"/>
+      <body>
+        <h2>Escaneie o QR Code no WhatsApp:</h2>
+        <img src="${qrcodeBase64}" />
       </body>
-    </html>\`;
+    </html>
+  `;
+
   res.send(html);
 });
 
