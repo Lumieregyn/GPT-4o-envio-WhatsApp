@@ -1,34 +1,53 @@
-const express = require('express');
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const { create } = require("@wppconnect-team/wppconnect");
+
 const app = express();
 const port = process.env.PORT || 8080;
 
-let qrCodeBase64 = '';
+let qrCodeBase64 = "";
 
-app.use(express.json({ limit: '10mb' }));
-
-app.get('/qr', (req, res) => {
-  if (!qrCodeBase64) {
-    return res.send('QR code ainda não gerado.');
-  }
-  const html = '<html><body style="display:flex;justify-content:center;align-items:center;height:100vh">' +
-               '<img src="data:image/png;base64,' + qrCodeBase64 + '" />' +
-               '</body></html>';
-  res.send(html);
+create({
+  session: "lumieregyn",
+  catchQR: (base64Qr, asciiQR) => {
+    qrCodeBase64 = base64Qr;
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>QR Code</title>
+      </head>
+      <body>
+        <h2>Escaneie o QR Code:</h2>
+        <img src="${base64Qr}" width="300" />
+      </body>
+      </html>
+    `;
+    fs.writeFileSync(path.join(__dirname, "public", "qr.html"), html);
+  },
+  headless: true,
+  devtools: false,
+  logQR: true,
+}).then((client) => {
+  console.log("✅ WhatsApp conectado e pronto para envio.");
 });
 
-app.post('/qr', (req, res) => {
-  const { code } = req.body;
-  if (!code) {
-    return res.status(400).json({ error: 'Código base64 não fornecido' });
+app.use(express.static("public"));
+
+app.get("/qr", (req, res) => {
+  if (fs.existsSync(path.join(__dirname, "public", "qr.html"))) {
+    res.sendFile(path.join(__dirname, "public", "qr.html"));
+  } else {
+    res.send("QR Code ainda não gerado.");
   }
-  qrCodeBase64 = code.replace(/^data:image\/png;base64,/, '');
-  res.json({ status: 'QR code armazenado com sucesso' });
 });
 
-app.get('/health', (req, res) => {
-  res.send('ok');
+app.get("/health", (req, res) => {
+  res.send("✅ Server online");
 });
 
 app.listen(port, () => {
-  console.log('🚀 Servidor rodando na porta ' + port);
+  console.log(`🚀 Servidor rodando na porta ${port}`);
 });

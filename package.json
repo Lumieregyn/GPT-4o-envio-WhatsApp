@@ -1,11 +1,13 @@
 {
-  "name": "gpt4o-qr-correto",
+  "name": "gpt4o-qr-route",
   "version": "1.0.0",
+  "description": "Servidor Express com rota de QR do WppConnect",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
+    "@wppconnect-team/wppconnect": "^1.9.5",
     "express": "^4.18.2"
   }
 }
