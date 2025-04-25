@@ -1,12 +1,12 @@
 {
-  "name": "gpt4o-wppconnect-full",
+  "name": "wppconnect-final-commonjs",
   "version": "1.0.0",
-  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "@wppconnect-team/wppconnect": "^1.9.9"
   }

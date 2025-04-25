@@ -1,5 +1,6 @@
-import express from 'express';
-import { create } from '@wppconnect-team/wppconnect';
+require('dotenv').config();
+const express = require('express');
+const { create } = require('@wppconnect-team/wppconnect');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -17,7 +18,7 @@ app.get('/qr', (_, res) => {
     <html>
       <body style="text-align:center; padding-top: 40px;">
         <h2>Escaneie o QR Code abaixo:</h2>
-        <img src="${qrCodeBase64}" width="300" />
+        <img src="` + qrCodeBase64 + `" width="300" />
       </body>
     </html>`;
   res.send(html);
@@ -42,17 +43,13 @@ app.post('/conversa', async (req, res) => {
     if (!/prazo|dias|entrega/i.test(texto)) pendencias.push('Prazo');
     if (!/pode gerar|pode mandar|pode fazer/i.test(texto)) pendencias.push('Confirmação final');
 
-    const alerta = \`📌 Alerta de Checklist
-
-Cliente: \${nomeCliente}
-Vendedor: \${vendedor}
-Telefone: \${foneCliente}
-
-Itens pendentes:
-\${pendencias.map(p => '- ' + p).join('\n')}
-
-⚠️ Por favor, confirme com o cliente antes de gerar o pedido.
-\`;
+    const alerta = "📌 Alerta de Checklist\n\n" +
+      "Cliente: " + nomeCliente + "\n" +
+      "Vendedor: " + vendedor + "\n" +
+      "Telefone: " + foneCliente + "\n\n" +
+      "Itens pendentes:\n" +
+      pendencias.map(p => "- " + p).join("\n") + "\n\n" +
+      "⚠️ Por favor, confirme com o cliente antes de gerar o pedido.";
 
     if (pendencias.length > 0 && client) {
       await client.sendText(process.env.GESTOR_PHONE + '@c.us', alerta);
