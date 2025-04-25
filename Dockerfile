@@ -1,7 +1,5 @@
-# Base leve do Node.js com suporte a Puppeteer
 FROM node:18-slim
 
-# Instala bibliotecas necessárias para o Chromium (Puppeteer)
 RUN apt-get update && apt-get install -y \
   wget \
   ca-certificates \
@@ -46,18 +44,11 @@ RUN apt-get update && apt-get install -y \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-# Define diretório de trabalho
 WORKDIR /app
-
-# Copia os arquivos do projeto
 COPY . .
 
-# Instala dependências
 RUN npm install
-
-# Porta usada pelo Railway
-ENV PORT=8080
 EXPOSE 8080
+ENV PORT=8080
 
-# Comando para iniciar o app
 CMD ["npm", "start"]
