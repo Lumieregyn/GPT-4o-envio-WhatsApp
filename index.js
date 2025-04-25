@@ -18,7 +18,6 @@ let client = null;
 // Health check
 app.get('/health', (_, res) => res.status(200).send('OK'));
 
-// Rota para visualização do QR code
 app.get('/qr', (_, res) => {
   const htmlPath = path.join(__dirname, 'public', 'qr.html');
   if (fs.existsSync(htmlPath)) {
@@ -28,7 +27,6 @@ app.get('/qr', (_, res) => {
   }
 });
 
-// Função de envio
 async function enviarAlertas(whatsappClient, vendedor, cliente, mensagemGPT) {
   const numeroGestor = GESTOR_PHONE;
   const numeroCliente = cliente.Phone;
@@ -47,19 +45,20 @@ ${mensagemGPT}
 
   try {
     if (numeroGestor) {
+      console.log('➡️ Enviando alerta para GESTOR:', numeroGestor);
       await whatsappClient.sendText(`${numeroGestor}@c.us`, alerta);
-      console.log('✅ Alerta enviado ao GESTOR:', numeroGestor);
+      console.log('✅ Alerta enviado ao GESTOR');
     }
     if (numeroCliente) {
+      console.log('➡️ Enviando alerta para CLIENTE/VENDEDOR:', numeroCliente);
       await whatsappClient.sendText(`${numeroCliente}@c.us`, alerta);
-      console.log('✅ Alerta enviado ao CLIENTE/VENDEDOR:', numeroCliente);
+      console.log('✅ Alerta enviado ao CLIENTE/VENDEDOR');
     }
   } catch (err) {
-    console.error('❌ Erro ao enviar mensagens via WppConnect:', err);
+    console.error('❌ Erro no envio de alerta:', err);
   }
 }
 
-// Inicializa cliente do WhatsApp
 create({
   session: 'lumieregyn',
   catchQR: (base64Qrimg, asciiQR, attempt, urlCode) => {
@@ -85,22 +84,31 @@ create({
   console.error('❌ Erro ao iniciar sessão do WhatsApp:', err.message);
 });
 
-// Rota principal de análise
 app.post('/conversa', async (req, res) => {
-  if (!client) return res.status(503).json({ error: 'WhatsApp não conectado ainda' });
+  console.log('📥 Requisição recebida em /conversa');
+  if (!client) {
+    console.error('❌ WhatsApp ainda não conectado');
+    return res.status(503).json({ error: 'WhatsApp não conectado ainda' });
+  }
 
   const p = req.body.payload || {};
   const user = p.user || {};
   const message = p.Message || {};
   const attendant = p.attendant || {};
 
+  console.log('🧾 Dados recebidos:', { user, message, attendant });
+
   const hasContent = message.text || (Array.isArray(message.attachments) && message.attachments.length > 0);
-  if (!hasContent) return res.status(400).json({ error: 'Mensagem vazia' });
+  if (!hasContent) {
+    console.error('❌ Mensagem vazia');
+    return res.status(400).json({ error: 'Mensagem vazia' });
+  }
 
   const conteudo = message.text || '[anexo]';
   const prompt = `Você é um supervisor de atendimento comercial. Verifique se nesta conversa o cliente confirmou: produto, cor, medidas, quantidade, tensão, prazo e disse "pode gerar". Mensagem:\n${conteudo}`;
 
   try {
+    console.log('🎯 Enviando prompt para GPT...');
     const gpt = await axios.post('https://api.openai.com/v1/chat/completions', {
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
@@ -113,15 +121,18 @@ app.post('/conversa', async (req, res) => {
     });
 
     const resultado = gpt.data.choices[0].message.content;
-    console.log('📌 Análise do checklist:', resultado);
+    console.log('🧠 Resposta do GPT:', resultado);
 
     if (resultado.includes('⚠️') || resultado.toLowerCase().includes('faltando')) {
+      console.log('🚨 Alerta será disparado');
       await enviarAlertas(client, attendant, user, resultado);
+    } else {
+      console.log('✅ Mensagem completa, sem alerta.');
     }
 
     res.status(200).json({ status: 'ok', analise: resultado });
   } catch (err) {
-    console.error('❌ Erro na análise GPT ou envio SURI:', err.message);
+    console.error('❌ Erro na análise ou envio:', err);
     res.status(500).json({ error: 'Erro interno' });
   }
 });
