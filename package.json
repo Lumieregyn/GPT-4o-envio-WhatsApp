@@ -1,1 +1,15 @@
-{"name": "gpt4o-wppconnect-timeout-final", "version": "1.0.0", "main": "index.js", "scripts": {"start": "node index.js"}}
+{
+  "name": "gpt4o-wpp-final-envio",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@wppconnect-team/wppconnect": "^1.9.7",
+    "axios": "^1.6.7",
+    "express": "^4.19.2",
+    "openai": "^4.25.0"
+  }
+}
