@@ -71,7 +71,7 @@ app.post('/conversa', async (req, res) => {
 
   const conteudo = message.text || '[anexo]';
 
-  const prompt = \`Você é um supervisor de atendimento comercial. Verifique se nesta conversa o cliente confirmou: produto, cor, medidas, quantidade, tensão, prazo e disse "pode gerar". Mensagem:\n\${conteudo}\`;
+  const prompt = `Você é um supervisor de atendimento comercial. Verifique se nesta conversa o cliente confirmou: produto, cor, medidas, quantidade, tensão, prazo e disse "pode gerar". Mensagem:\n${conteudo}`;
 
   try {
     const gpt = await axios.post('https://api.openai.com/v1/chat/completions', {
@@ -80,7 +80,7 @@ app.post('/conversa', async (req, res) => {
       temperature: 0.2
     }, {
       headers: {
-        Authorization: \`Bearer \${OPENAI_API_KEY}\`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
@@ -89,10 +89,10 @@ app.post('/conversa', async (req, res) => {
     console.log('📌 Análise do checklist:', resultado);
 
     if (resultado.includes('⚠️')) {
-      const alerta = \`🚨 *ATENÇÃO*\nO cliente *\${user.Name || 'Cliente'}* ainda não confirmou tudo:\n\n\${resultado}\n\nResponsável: *\${attendant.Name || 'vendedor'}*\`;
+      const alerta = `🚨 *ATENÇÃO*\nO cliente *${user.Name || 'Cliente'}* ainda não confirmou tudo:\n\n${resultado}\n\nResponsável: *${attendant.Name || 'vendedor'}*`;
 
-      if (GESTOR_PHONE) await client.sendText(\`\${GESTOR_PHONE}@c.us\`, alerta);
-      if (user.Phone) await client.sendText(\`\${user.Phone}@c.us\`, alerta);
+      if (GESTOR_PHONE) await client.sendText(`${GESTOR_PHONE}@c.us`, alerta);
+      if (user.Phone) await client.sendText(`${user.Phone}@c.us`, alerta);
       console.log('✅ Alerta enviado com sucesso.');
     }
 
