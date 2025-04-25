@@ -10,25 +10,8 @@ app.use(express.json({ limit: '10mb' }));
 const GESTOR_PHONE = process.env.GESTOR_PHONE;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-const prompt = `Você é um agente que analisa conversas de WhatsApp e extrai as confirmações do cliente para um pedido. Verifique se foram confirmados: produto, cor, quantidade, tensão, medidas, prazo e se o cliente disse "pode gerar".`;
-
-function montarMensagemAlerta(nomeCliente, vendedor, pendencias) {
-  return `⚠️ *Alerta de Checklist Incompleto*
-Cliente: ${nomeCliente}
-Vendedor: ${vendedor}
-
-Itens pendentes:
-${pendencias
-    .map((p) => `- ${p}`)
-    .join('
-')}
-
-Por favor, confirme com o cliente antes de prosseguir.`;
-}
-
 function analisarConteudoTexto(texto) {
   const pendencias = [];
-
   if (!/produto|arandela|pendente|plafon|spot/i.test(texto)) pendencias.push('Produto');
   if (!/preto|branco|dourado|cobre|cromado/i.test(texto)) pendencias.push('Cor');
   if (!/\d+\s?(peças|pçs|unidades?)/i.test(texto)) pendencias.push('Quantidade');
@@ -36,8 +19,20 @@ function analisarConteudoTexto(texto) {
   if (!/cm|medida|altura|largura/i.test(texto)) pendencias.push('Medidas');
   if (!/prazo|dias|úteis|entrega/i.test(texto)) pendencias.push('Prazo');
   if (!/pode gerar|pode fazer|pode mandar|pode fechar/i.test(texto)) pendencias.push('Confirmação final');
-
   return pendencias;
+}
+
+function montarMensagemAlerta(nomeCliente, vendedor, pendencias) {
+  return `⚠️ *Alerta de Checklist Incompleto*
+Cliente: ${nomeCliente}
+Vendedor: ${vendedor}
+
+Itens pendentes:
+` +
+         pendencias.map(p => `- ${p}`).join('\n') +
+         `
+
+Por favor, confirme com o cliente antes de prosseguir.`;
 }
 
 async function enviarWhatsApp(numero, mensagem) {
@@ -48,13 +43,11 @@ async function enviarWhatsApp(numero, mensagem) {
 app.post('/conversa', async (req, res) => {
   try {
     const { user, message, attendant } = req.body.payload || req.body;
-
     const nomeCliente = user?.Name || 'Cliente';
     const vendedor = attendant?.Name || 'Vendedor';
     const texto = message?.text || '';
 
     console.log('📨 Mensagem recebida:', texto);
-
     const pendencias = analisarConteudoTexto(texto);
 
     if (pendencias.length > 0) {
@@ -76,14 +69,10 @@ create({
   browserArgs: ['--no-sandbox'],
   waitForLogin: true,
   autoClose: 0,
-})
-  .then((client) => {
-    global.client = client;
-    console.log('✅ WhatsApp conectado e pronto para envio.');
-  })
-  .catch((erro) => console.error('Erro ao iniciar WPP:', erro));
+}).then(client => {
+  global.client = client;
+  console.log('✅ WhatsApp conectado e pronto para envio.');
+});
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
