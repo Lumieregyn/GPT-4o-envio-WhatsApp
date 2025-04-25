@@ -7,6 +7,7 @@ const app = express();
 const port = process.env.PORT || 8080;
 
 let qrCodeBase64 = '';
+let clientGlobal = null;
 
 create({
   session: 'lumieregyn',
@@ -14,7 +15,7 @@ create({
   puppeteerOptions: {
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   },
-  catchQR: (base64Qr, asciiQR, attempts, urlCode) => {
+  catchQR: (base64Qr) => {
     qrCodeBase64 = base64Qr;
     console.log('🔄 QR Code capturado');
     const html = '<html><body style="display:flex;justify-content:center;align-items:center;height:100vh">' +
@@ -26,6 +27,16 @@ create({
   logQR: false,
 }).then((client) => {
   console.log('✅ WhatsApp conectado e pronto para uso.');
+  clientGlobal = client;
+
+  // 🚀 Disparar mensagem automática assim que conectar
+  client.sendText('5562985299728@c.us', '✅ Teste de envio automático pelo agente!')
+    .then((result) => {
+      console.log('✅ Mensagem enviada com sucesso:', result);
+    })
+    .catch((erro) => {
+      console.error('❌ Erro ao enviar mensagem automática:', erro);
+    });
 }).catch((err) => {
   console.error('❌ Erro ao inicializar:', err);
 });
