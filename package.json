@@ -1,13 +1,14 @@
+
 {
-  "name": "agente-supervisor-final-completo",
+  "name": "gpt4o-whatsapp-alerta-final",
   "version": "1.0.0",
-  "description": "Agente Supervisor Comercial IA - Versão Completa",
+  "description": "Agente GPT-4o integração WhatsApp alerta automático",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "@wppconnect-team/wppconnect": "^1.9.5",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "@wppconnect-team/wppconnect": "^1.11.1"
   }
 }
