@@ -1,7 +1,7 @@
 {
-  "name": "gpt4o-envio-mensagem-automatico",
+  "name": "agente-supervisor-final-completo",
   "version": "1.0.0",
-  "description": "Servidor Express com WppConnect e envio automático de mensagem",
+  "description": "Agente Supervisor Comercial IA - Versão Completa",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
