@@ -1,7 +1,7 @@
 {
-  "name": "projeto-gpt4o-envio-whatsapp-leve-final",
+  "name": "projeto-gpt4o-envio-whatsapp-leve-definitivo",
   "version": "1.0.0",
-  "description": "Sistema de alertas WhatsApp usando WppConnect + GPT-4o (com Dockerfile Railway)",
+  "description": "Sistema de alertas WhatsApp usando WppConnect + GPT-4o com Dockerfile corrigido",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

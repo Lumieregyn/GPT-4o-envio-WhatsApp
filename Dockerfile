@@ -1,6 +1,6 @@
 FROM node:18
 
-# Instalar dependências Chromium necessárias
+# Instalar todas as dependências necessárias para Chromium/Puppeteer
 RUN apt-get update && apt-get install -y \
   wget \
   ca-certificates \
@@ -18,6 +18,9 @@ RUN apt-get update && apt-get install -y \
   libxcomposite1 \
   libxdamage1 \
   libxrandr2 \
+  libdrm2 \
+  libgbm1 \
+  libxshmfence1 \
   xdg-utils \
   --no-install-recommends && \
   rm -rf /var/lib/apt/lists/*
