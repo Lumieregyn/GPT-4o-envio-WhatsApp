@@ -1,7 +1,7 @@
+
 import express from 'express';
 import { create } from '@wppconnect-team/wppconnect';
 import fs from 'fs';
-import path from 'path';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -12,17 +12,17 @@ const PORT = process.env.PORT || 8080;
 let clientWpp;
 let qrCodeBase64 = '';
 
-const alerts = []; // Painel para visualizar os alertas enviados
+const alerts = [];
 
 create({
   session: 'lumieregyn',
-  catchQR: (base64Qr, asciiQR) => {
+  catchQR: (base64Qr) => {
     qrCodeBase64 = base64Qr;
     const html = `
       <html>
         <body style="text-align:center;">
           <h1>Escaneie o QR Code</h1>
-          <img src="${base64Qr}" style="width:300px;height:300px;"/>
+          <img src="\${base64Qr}" style="width:300px;height:300px;"/>
         </body>
       </html>
     `;
@@ -55,10 +55,8 @@ create({
 
     console.log('🔍 Analisando conversa...');
 
-    // Estrutura inicial de alerta (resposta exemplo simulada)
-    const textoAnalise = `Cliente ${user.Name} enviou: "${message.text}"\nVendedor: ${attendant.Name}`;
+    const textoAnalise = \`Cliente \${user.Name} enviou: "\${message.text}"\nVendedor: \${attendant.Name}\`;
 
-    // Simula análise e cria um alerta
     const alerta = {
       id: Date.now(),
       cliente: user.Name,
@@ -71,8 +69,8 @@ create({
     alerts.push(alerta);
 
     try {
-      await clientWpp.sendText(`${user.Phone}@c.us`, `📢 Atenção!\n${textoAnalise}`);
-      console.log(`✅ Mensagem enviada para vendedor: ${attendant.Name}`);
+      await clientWpp.sendText(\`\${user.Phone}@c.us\`, \`📢 Atenção!\n\${textoAnalise}\`);
+      console.log(\`✅ Mensagem enviada para vendedor: \${attendant.Name}\`);
       alerta.status = 'enviado';
     } catch (error) {
       console.error('❌ Falha ao enviar mensagem:', error);
@@ -83,39 +81,36 @@ create({
   });
 });
 
-// Rota QR
 app.get('/qr', (req, res) => {
   if (qrCodeBase64) {
-    res.send(`
+    res.send(\`
       <html>
         <body style="text-align:center;">
           <h1>Escaneie para conectar</h1>
-          <img src="${qrCodeBase64}" style="width:300px;height:300px;"/>
+          <img src="\${qrCodeBase64}" style="width:300px;height:300px;"/>
         </body>
       </html>
-    `);
+    \`);
   } else {
     res.send('QR Code ainda não gerado. Aguarde...');
   }
 });
 
-// Rota Painel
 app.get('/painel', (req, res) => {
-  res.send(`
+  res.send(\`
     <html>
       <body style="font-family:sans-serif;">
         <h1>📈 Painel de Alertas Enviados</h1>
         <ul>
-          ${alerts.map(alert => `<li>[${alert.status}] Cliente: ${alert.cliente} | Vendedor: ${alert.vendedor} | Texto: ${alert.texto}</li>`).join('')}
+          \${alerts.map(alert => \`<li>[\${alert.status}] Cliente: \${alert.cliente} | Vendedor: \${alert.vendedor} | Texto: \${alert.texto}</li>\`).join('')}
         </ul>
       </body>
     </html>
-  `);
+  \`);
 });
 
-// Health Check
 app.get('/health', (req, res) => res.send('Servidor ativo 🚀'));
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor Express iniciado na porta ${PORT}`);
+  console.log(\`🚀 Servidor Express iniciado na porta \${PORT}\`);
 });
