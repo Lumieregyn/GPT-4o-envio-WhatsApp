@@ -28,19 +28,19 @@ app.get('/health', (req, res) => res.send('Servidor ativo!'));
 
 app.get('/qr', (req, res) => {
   if (!qrCodeData) return res.status(404).send('QR Code ainda não disponível.');
-  res.send(\`
-    <html><body>
-      <h2>Escaneie o QR Code:</h2>
-      <img src="\${qrCodeData}" style="width:300px;height:300px;" />
-    </body></html>
-  \`);
+  res.send(
+    '<html><body>' +
+      '<h2>Escaneie o QR Code:</h2>' +
+      '<img src="' + qrCodeData + '" style="width:300px;height:300px;" />' +
+    '</body></html>'
+  );
 });
 
 app.post('/alerta', async (req, res) => {
   try {
     const { numero, mensagem } = req.body;
     if (!clientInstance) return res.status(500).send('Cliente não inicializado.');
-    await clientInstance.sendText(\`\${numero}@c.us\`, mensagem);
+    await clientInstance.sendText(numero + '@c.us', mensagem);
     res.send({ status: 'Mensagem enviada!' });
   } catch (error) {
     console.error('Erro ao enviar:', error);
@@ -59,9 +59,9 @@ setInterval(async () => {
   console.log('📊 Análise da IA:', analysis);
 
   const sellerNumber = "6294671766";
-  await clientInstance.sendText(\`\${sellerNumber}@c.us\`, '⏳ Alerta automático: cliente aguardando orçamento.');
+  await clientInstance.sendText(sellerNumber + '@c.us', '⏳ Alerta automático: cliente aguardando orçamento.');
 }, 3600000);
 
 app.listen(PORT, () => {
-  console.log(\`🚀 Servidor rodando na porta \${PORT}\`);
+  console.log('🚀 Servidor rodando na porta ' + PORT);
 });
