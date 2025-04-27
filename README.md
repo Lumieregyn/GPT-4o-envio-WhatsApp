@@ -1,8 +1,9 @@
+# GPT-4o Envio WhatsApp
 
-# GPT-4o WhatsApp Alerta Final
+Projeto de automação com GPT-4o para análise de conversas e envio de alertas automáticos no WhatsApp usando WppConnect.
 
-Agente inteligente para análise de conversas, envio de alertas para vendedores e supervisão de atendimentos.
+## Rodando localmente
 
-- Baseado em WPPConnect
-- Express Server (porta 8080)
-- Integrado com GPT-4o
+```bash
+npm install
+npm start
