@@ -1,9 +1,19 @@
-# GPT-4o Envio WhatsApp
+# 📦 Projeto GPT-4o - Envios Inteligentes WhatsApp
 
-Projeto de automação com GPT-4o para análise de conversas e envio de alertas automáticos no WhatsApp usando WppConnect.
+## 🚀 Descrição
+Sistema Node.js para:
+- Monitoramento de conversas via WhatsApp (WppConnect)
+- Análise de mensagens usando OpenAI GPT-4o
+- Alertas automáticos de atraso e falta de informação
+- Envio de notificações para vendedores e grupo de gestores
 
-## Rodando localmente
+## 🛠 Deploy no Railway
+1. Suba este repositório para o GitHub.
+2. Conecte o projeto no Railway.
+3. Configure o arquivo `.env` com suas credenciais.
+4. Deploy automático!
 
-```bash
-npm install
-npm start
+## 📄 Rotas
+- `/health` ➔ Healthcheck
+- `/qr` ➔ Geração de QR Code
+
