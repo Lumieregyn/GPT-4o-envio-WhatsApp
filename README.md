@@ -1,13 +1,15 @@
-# 📦 Projeto GPT-4o - Envios Inteligentes WhatsApp (Leve Corrigido)
+# 📦 Projeto GPT-4o WhatsApp (Com Dockerfile Railway)
 
 Servidor Express para:
 - Conexão WhatsApp via WppConnect
-- Análise de mensagens com OpenAI GPT-4o
-- Alertas automáticos de atraso
-- Geração de QR Code
+- Análise de mensagens GPT-4o
+- Alertas automáticos
+- QR Code de conexão
+
+✅ Pronto para Railway com Dockerfile corrigido!
 
 ## 🚀 Deploy
 - Suba no GitHub
-- Conecte ao Railway
+- Conecte no Railway
 - Configure `.env`
 - Deploy automático!
