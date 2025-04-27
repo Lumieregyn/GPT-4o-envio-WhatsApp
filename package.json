@@ -1,14 +1,5 @@
-
 {
-  "name": "gpt4o-whatsapp-alerta-final",
+  "name": "gpt4o-envio-whatsapp",
   "version": "1.0.0",
-  "description": "Agente GPT-4o integração WhatsApp alerta automático",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "@wppconnect-team/wppconnect": "^1.11.1"
-  }
+  "main": "index.js"
 }
