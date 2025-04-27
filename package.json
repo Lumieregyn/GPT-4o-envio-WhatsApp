@@ -1,23 +1,15 @@
 {
-  "name": "gpt4o-envio-whatsapp",
+  "name": "projeto-gpt4o-envio-whatsapp",
   "version": "1.0.0",
-  "description": "Agente de envio automático WhatsApp usando GPT-4o e WPPConnect.",
-  "main": "index.js",
+  "description": "Sistema de envio de alertas via WhatsApp com análise GPT-4o",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
-  "keywords": [
-    "whatsapp",
-    "wppconnect",
-    "gpt4o",
-    "alertas",
-    "automacao"
-  ],
-  "author": "Projeto Lumieregyn IA",
-  "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "@wppconnect-team/wppconnect": "^1.10.2",
-    "dotenv": "^16.4.0"
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.2",
+    "wppconnect": "^1.9.6"
   }
 }
