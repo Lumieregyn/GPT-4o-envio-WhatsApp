@@ -27,14 +27,18 @@ create({
   clientInstance = client;
   console.log('✅ WhatsApp conectado.');
 
-  const chats = await client.listChats();
-  const grupo = chats.find(chat => chat.name && chat.name.includes('Gerente Comercial IA'));
-  if (grupo) {
-    grupoGestoresID = grupo.id._serialized;
-    console.log('🎯 Grupo de gestores encontrado:', grupoGestoresID);
-  } else {
-    console.log('⚠️ Grupo de gestores "Gerente Comercial IA" não encontrado.');
-  }
+  // Adicionar delay para capturar o grupo
+  setTimeout(async () => {
+    const chats = await client.listChats();
+    const grupo = chats.find(chat => chat.name && chat.name.includes('Gerente Comercial IA'));
+    if (grupo) {
+      grupoGestoresID = grupo.id._serialized;
+      console.log('🎯 Grupo de gestores encontrado:', grupoGestoresID);
+    } else {
+      console.log('⚠️ Grupo de gestores "Gerente Comercial IA" não encontrado mesmo após timeout.');
+    }
+  }, 8000);
+
 }).catch((error) => {
   console.error('Erro ao iniciar sessão:', error);
 });
