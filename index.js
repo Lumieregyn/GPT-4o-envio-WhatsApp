@@ -13,14 +13,16 @@ app.use(express.json());
 
 create({
   session: 'lumieregyn',
-  catchQR: (base64Qr) => {
+  catchQR: (base64Qr, asciiQR, attempt) => {
     qrCodeData = base64Qr;
-    console.log('🔄 QR Code capturado');
+    console.log('🔄 QR Code capturado - tentativa', attempt);
   },
   puppeteerOptions: {
     args: ['--no-sandbox'],
     protocolTimeout: 120000
-  }
+  },
+  autoClose: 0,
+  maxAttempts: 0
 }).then(async (client) => {
   clientInstance = client;
   console.log('✅ WhatsApp conectado.');
@@ -56,7 +58,6 @@ app.post('/alerta', async (req, res) => {
   }
 });
 
-// Novo fluxo: webhook de mensagens em tempo real
 app.post('/webhook', async (req, res) => {
   try {
     const { numero, texto } = req.body;
@@ -79,7 +80,6 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Monitoramento contínuo de atrasos - 10 minutos
 setInterval(async () => {
   if (!clientInstance) return;
   if (!isBusinessHours()) return;
