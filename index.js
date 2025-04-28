@@ -28,7 +28,7 @@ create({
   console.log('✅ WhatsApp conectado.');
 
   const chats = await client.listChats();
-  const grupo = chats.find(chat => chat.name === 'Gerente Comercial IA');
+  const grupo = chats.find(chat => chat.name && chat.name.includes('Gerente Comercial IA'));
   if (grupo) {
     grupoGestoresID = grupo.id._serialized;
     console.log('🎯 Grupo de gestores encontrado:', grupoGestoresID);

@@ -1,6 +1,6 @@
 {
-  "name": "projeto-gpt4o-envio-whatsapp-pro-qr-infinito",
-  "version": "2.1.0",
+  "name": "projeto-gpt4o-envio-whatsapp-pro-grupo-flexivel",
+  "version": "2.2.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
