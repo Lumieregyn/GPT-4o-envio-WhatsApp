@@ -7,6 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 let clientInstance = null;
 let qrCodeData = '';
+let grupoGestoresID = null;
 
 app.use(express.json());
 
@@ -20,9 +21,18 @@ create({
     args: ['--no-sandbox'],
     protocolTimeout: 120000
   }
-}).then((client) => {
+}).then(async (client) => {
   clientInstance = client;
   console.log('✅ WhatsApp conectado.');
+
+  const chats = await client.listChats();
+  const grupo = chats.find(chat => chat.name === 'Gerente Comercial IA');
+  if (grupo) {
+    grupoGestoresID = grupo.id._serialized;
+    console.log('🎯 Grupo de gestores encontrado:', grupoGestoresID);
+  } else {
+    console.log('⚠️ Grupo de gestores "Gerente Comercial IA" não encontrado.');
+  }
 }).catch((error) => {
   console.error('Erro ao iniciar sessão:', error);
 });
@@ -46,6 +56,30 @@ app.post('/alerta', async (req, res) => {
   }
 });
 
+// Novo fluxo: webhook de mensagens em tempo real
+app.post('/webhook', async (req, res) => {
+  try {
+    const { numero, texto } = req.body;
+    if (!clientInstance) return res.status(500).send('Cliente não inicializado.');
+
+    console.log('📥 Nova mensagem recebida para análise:', texto);
+    const analise = await analyzeMessage(texto);
+
+    if (analise && analise.choices && analise.choices[0].message.content.includes('faltam informações')) {
+      console.log('⚠️ Faltam informações importantes, enviando alerta!');
+      if (grupoGestoresID) {
+        await clientInstance.sendText(grupoGestoresID, '🚨 ALERTA: Conversa detectada sem todas as informações obrigatórias.');
+      }
+    }
+
+    res.send({ status: 'Mensagem analisada.' });
+  } catch (error) {
+    console.error('Erro ao processar webhook:', error);
+    res.status(500).send('Erro no webhook.');
+  }
+});
+
+// Monitoramento contínuo de atrasos - 10 minutos
 setInterval(async () => {
   if (!clientInstance) return;
   if (!isBusinessHours()) return;
@@ -55,7 +89,7 @@ setInterval(async () => {
   console.log('📊 Análise da IA:', analysis);
   const sellerNumber = "6294671766";
   await clientInstance.sendText(sellerNumber + '@c.us', '⏳ Alerta automático: cliente aguardando orçamento.');
-}, 3600000);
+}, 600000);
 
 app.listen(PORT, () => {
   console.log('🚀 Servidor rodando na porta ' + PORT);
