@@ -1,5 +1,4 @@
 const axios = require('axios');
-
 async function analyzeMessage(text) {
   try {
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
@@ -16,5 +15,4 @@ async function analyzeMessage(text) {
     return null;
   }
 }
-
 module.exports = { analyzeMessage };

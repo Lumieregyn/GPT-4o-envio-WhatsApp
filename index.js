@@ -16,7 +16,10 @@ create({
     qrCodeData = base64Qr;
     console.log('🔄 QR Code capturado');
   },
-  puppeteerOptions: { args: ['--no-sandbox'] }
+  puppeteerOptions: {
+    args: ['--no-sandbox'],
+    protocolTimeout: 120000
+  }
 }).then((client) => {
   clientInstance = client;
   console.log('✅ WhatsApp conectado.');
@@ -28,12 +31,7 @@ app.get('/health', (req, res) => res.send('Servidor ativo!'));
 
 app.get('/qr', (req, res) => {
   if (!qrCodeData) return res.status(404).send('QR Code ainda não disponível.');
-  res.send(
-    '<html><body>' +
-      '<h2>Escaneie o QR Code:</h2>' +
-      '<img src="' + qrCodeData + '" style="width:300px;height:300px;" />' +
-    '</body></html>'
-  );
+  res.send('<html><body><h2>Escaneie o QR Code:</h2><img src="' + qrCodeData + '" style="width:300px;height:300px;" /></body></html>');
 });
 
 app.post('/alerta', async (req, res) => {
@@ -48,16 +46,13 @@ app.post('/alerta', async (req, res) => {
   }
 });
 
-// Monitoramento contínuo
 setInterval(async () => {
   if (!clientInstance) return;
   if (!isBusinessHours()) return;
-
   console.log('⏰ Verificando atrasos...');
   const simulatedMessage = "Estou aguardando orçamento!";
   const analysis = await analyzeMessage(simulatedMessage);
   console.log('📊 Análise da IA:', analysis);
-
   const sellerNumber = "6294671766";
   await clientInstance.sendText(sellerNumber + '@c.us', '⏳ Alerta automático: cliente aguardando orçamento.');
 }, 3600000);
